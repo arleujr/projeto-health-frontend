@@ -2,19 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Captura o token guardado nos Cookies (melhor prática para middleware Next.js)
+  // Extracts the cookie dynamically during the request lifecycle
   const token = request.cookies.get('@ProjectHealth:token')?.value;
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login');
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard') || 
-                          request.nextUrl.pathname.startsWith('/plans');
+  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard');
 
-  // Se tentar acessar o dashboard sem token, barra imediatamente e joga pro login
+  // Rule 1: Guarding private routes - No token means instant bounce to login
   if (isDashboardPage && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Se já estiver logado e tentar ir para o login, joga direto para o dashboard
+  // Rule 2: Preventing logged-in users from seeing the login screen again
   if (isAuthPage && token) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
@@ -22,7 +21,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Define quais rotas o middleware deve vigiar de perto
+// Configures the middleware to intercept only core authentication and dashboard paths
 export const config = {
-  matcher: ['/dashboard/:path*', '/plans/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/login'],
 };
