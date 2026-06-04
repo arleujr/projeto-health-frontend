@@ -5,7 +5,10 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import { api } from '@/lib/pi-client';
 import { Users, ArrowRight, UserPlus } from 'lucide-react';
-import { ProfessionalWidgets } from './components/ProfessionalWidgets'; // Ajuste o caminho se necessário
+import { ProfessionalWidgets } from './components/ProfessionalWidgets'; 
+import { PatientWidgets } from './components/PatientWidgets'; 
+import { AdminWidgets } from './components/AdminWidgets'; 
+import { CopilotChat } from './components/CopilotChat';
 
 interface PatientListItem {
   id: string;
@@ -20,7 +23,6 @@ export default function DashboardPage() {
 
   const patients: PatientListItem[] = data && Array.isArray(data.patients) ? data.patients : [];
   
-  // 🟢 NO FUTURO: Pegue isso do seu AuthContext ou da resposta do SWR (ex: data.user.role)
   const userRole = data?.user?.role || 'PROFISSIONAL'; 
   const userName = data?.user?.name || 'Profissional';
 
@@ -40,15 +42,23 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* ===================================================================== */}
-        {/* 1. ROLE-BASED RENDERING (O Painel Inteligente)                        */}
+        {/* 1. ROLE-BASED RENDERING                                               */}
         {/* ===================================================================== */}
         {userRole === 'PROFISSIONAL' && (
           <ProfessionalWidgets 
             userName={userName}
             professionalType="Especialista"
-            patients={patients} // Passando a lista real para o widget contar
-            stats={data?.stats} // Passando os status extras do backend (se existirem)
+            patients={patients}
+            stats={data?.stats}
           />
+        )}
+
+        {userRole === 'PATIENT' && (
+          <PatientWidgets userName={userName} />
+        )}
+
+        {userRole === 'ADMIN' && (
+          <AdminWidgets userName={userName} />
         )}
 
         {/* Header da Lista de Pacientes */}
@@ -67,7 +77,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ===================================================================== */}
-        {/* 2. LISTA REAL DE PACIENTES (O que você já tinha)                      */}
+        {/* 2. LISTA REAL DE PACIENTES                                            */}
         {/* ===================================================================== */}
         <div>
           {error ? (
@@ -111,6 +121,9 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      {/* 🧠 COPILOTO DE IA FLUTUANTE */}
+      <CopilotChat />
     </div>
   );
 }
