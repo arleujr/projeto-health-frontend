@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation'; // ✅ Official Next.js hook for dynamic route params
+import Link from 'next/link'; // ✅ Next.js Link component for smooth client-side navigation
 import { 
   Activity, BrainCircuit, AlertCircle, CheckCircle2, 
-  Clock, TrendingDown, Settings2, FileText 
+  Clock, TrendingDown, Settings2, FileText, ArrowLeft
 } from 'lucide-react';
 import { api } from '@/lib/api'; // ✅ Axios/Fetch wrapper for backend requests
 
@@ -56,7 +57,21 @@ export default function PatientWarRoom() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 md:p-10 font-sans w-full">
+      
       <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* ========================================================================= */}
+        {/* NAVIGATION HEADER: Provides instant client-side fallback to professional dashboard */}
+        {/* ========================================================================= */}
+        <div className="flex items-center justify-start">
+          <Link 
+            href="/dashboard" 
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </div>
         
         {/* =========================
             1. HEADER SECTION
@@ -176,7 +191,7 @@ export default function PatientWarRoom() {
                   `}>
                     <div className="mt-0.5">
                       {ticket.isOverdue ? (
-                                                <AlertCircle className="h-4 w-4 text-rose-600" />
+                        <AlertCircle className="h-4 w-4 text-rose-600" />
                       ) : (
                         <Clock className="h-4 w-4 text-amber-600" />
                       )}
