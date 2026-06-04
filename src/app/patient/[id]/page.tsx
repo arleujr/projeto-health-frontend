@@ -6,7 +6,7 @@ import {
   Activity, BrainCircuit, AlertCircle, CheckCircle2, 
   Clock, TrendingDown, Settings2, FileText 
 } from 'lucide-react';
-import { api } from '@/lib/api'; // ✅ Axios/Fetch wrapper for backend requests
+import { api } from '@/lib/api'; // ✅ Correct import for your API helper
 
 // ✅ TypeScript interface for tickets (strong typing instead of `any`)
 interface Ticket {
@@ -24,7 +24,7 @@ export default function PatientWarRoom() {
   const patientId = params.id as string;
 
   // ✅ Local state for backend data
-  const [magicSummary, setMagicSummary] = useState<string>("Carregando análise da IA...");
+  const [magicSummary, setMagicSummary] = useState<string>("Loading AI analysis...");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,12 +32,12 @@ export default function PatientWarRoom() {
   useEffect(() => {
     async function loadWarRoomData() {
       try {
-        // 1. Fetch AI clinical summary
-        const summaryResponse = await api.get(`/patients/${patientId}/summary`);
+        // 1. Fetch AI clinical summary (added /v1 prefix)
+        const summaryResponse = await api.get(`/v1/patients/${patientId}/summary`);
         setMagicSummary(summaryResponse.data.summary);
 
-        // 2. Fetch SLA tickets (pending actions)
-        const ticketsResponse = await api.get(`/patients/${patientId}/tickets`);
+        // 2. Fetch SLA tickets (added /v1 prefix)
+        const ticketsResponse = await api.get(`/v1/patients/${patientId}/tickets`);
         setTickets(ticketsResponse.data.tickets);
 
       } catch (error) {
@@ -48,7 +48,10 @@ export default function PatientWarRoom() {
       }
     }
 
-    loadWarRoomData();
+    // ✅ Only load data if patientId exists
+    if (patientId) {
+      loadWarRoomData();
+    }
   }, [patientId]);
 
   return (
@@ -173,9 +176,9 @@ export default function PatientWarRoom() {
                   `}>
                     <div className="mt-0.5">
                       {ticket.isOverdue ? (
-                        <AlertCircle className="h-4 w-4 text-rose-600" />
+                                                <AlertCircle className="h-4 w-4 text-rose-600" />
                       ) : (
-                                               <Clock className="h-4 w-4 text-amber-600" />
+                        <Clock className="h-4 w-4 text-amber-600" />
                       )}
                     </div>
                     <div>
