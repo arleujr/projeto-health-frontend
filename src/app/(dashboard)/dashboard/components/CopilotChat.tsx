@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BrainCircuit, X, Send, Sparkles, MessageSquare } from 'lucide-react';
+import { BrainCircuit, X, Send, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
+import { api } from '@/lib/pi-client'; // Importando o seu cliente Axios
 
 interface Message {
   id: string;
@@ -15,42 +16,58 @@ export function CopilotChat() {
     {
       id: '1',
       sender: 'ai',
-      text: 'Olá! Sou seu Copiloto de IA. Como posso te ajudar hoje? Você pode me pedir resumos de pacientes, checagem de exames ou até para redigir mensagens.'
+      text: 'Olá! Sou seu Copiloto de IA da HealthCore. Estou conectado ao sistema. O que você gostaria de saber hoje?'
     }
   ]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Estado para mostrar que a IA está pensando
 
-  // Sugestões de comandos rápidos (Sua IA vai interceptar isso no backend)
   const quickCommands = [
+    "Quantos pacientes ativos nós temos?",
     "Resuma a última semana do Carlos",
-    "Quem está com o SLA atrasado?",
-    "Redigir aviso de dieta p/ WhatsApp"
+    "Quem está com o SLA atrasado?"
   ];
 
-  const handleSendMessage = (textToSend: string) => {
-    if (!textToSend.trim()) return;
+  const handleSendMessage = async (textToSend: string) => {
+    if (!textToSend.trim() || isLoading) return;
 
-    // 1. Adiciona a mensagem do usuário
+    // 1. Adiciona a mensagem do usuário na tela
     const userMsg: Message = { id: Date.now().toString(), sender: 'user', text: textToSend };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setIsLoading(true);
 
-    // 2. Simulando o efeito de carregamento da IA (Depois entra o seu Axios aqui)
-    setTimeout(() => {
+    try {
+      // 2. Chama a sua API real no Back-end (que vai pro Groq)
+      const response = await api.post('/v1/copilot/chat', {
+        message: textToSend
+      });
+
+      // 3. Adiciona a resposta real da IA na tela
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
-        text: `Entendi o comando: "${textToSend}". Estou processando a integração com o banco de dados para te trazer essa resposta real em breve! 🧠✨`
+        text: response.data.reply || "Desculpe, não consegui gerar uma resposta."
       };
       setMessages(prev => [...prev, aiMsg]);
-    }, 800);
+      
+    } catch (error) {
+      console.error("Erro ao falar com o Copiloto:", error);
+      
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'ai',
+        text: "Desculpe, ocorreu um erro de conexão com meus servidores centrais. Tente novamente."
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
-      {/* ========================================================================= */}
-      {/* 1. FLOATING TRIGGER BUTTON (O Botão que fica fixo na tela) */}
-      {/* ========================================================================= */}
+      {/* Botão Flutuante */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -64,13 +81,10 @@ export function CopilotChat() {
         </button>
       )}
 
-      {/* ========================================================================= */}
-      {/* 2. CHAT WINDOW CONTAINER */}
-      {/* ========================================================================= */}
+      {/* Janela do Chat */}
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-[90vw] sm:w-[400px] h-[550px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-50 font-sans animate-in slide-in-from-bottom-5 duration-200">
           
-          {/* Header do Chat */}
           <div className="bg-gradient-to-r from-indigo-950 to-slate-900 p-4 text-white flex items-center justify-between border-b border-indigo-900">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-indigo-500/20 rounded-lg">
@@ -91,7 +105,6 @@ export function CopilotChat() {
             </button>
           </div>
 
-          {/* Área de Mensagens (Scrollable) */}
           <div className="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4">
             {messages.map((msg) => (
               <div
@@ -103,7 +116,7 @@ export function CopilotChat() {
                 >
                   {msg.sender === 'user' ? 'VC' : <BrainCircuit className="h-4 w-4" />}
                 </div>
-                <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm
+                <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap
                   ${msg.sender === 'user' 
                     ? 'bg-indigo-600 text-white rounded-tr-none' 
                     : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'}`}
@@ -112,15 +125,27 @@ export function CopilotChat() {
                 </div>
               </div>
             ))}
+            
+            {/* Indicador de Digitando... */}
+            {isLoading && (
+               <div className="flex gap-2 max-w-[85%] mr-auto">
+                 <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                 </div>
+                 <div className="p-3 bg-white border border-slate-200 rounded-2xl rounded-tl-none text-sm text-slate-500 shadow-sm flex items-center gap-2">
+                   Consultando dados...
+                 </div>
+               </div>
+            )}
           </div>
 
-          {/* Atalhos / Comandos Rápidos */}
           <div className="p-2 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-1.5">
             {quickCommands.map((cmd, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSendMessage(cmd)}
-                className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+                disabled={isLoading}
+                className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
               >
                 <MessageSquare className="h-3 w-3" />
                 {cmd}
@@ -128,19 +153,20 @@ export function CopilotChat() {
             ))}
           </div>
 
-          {/* Input de Texto */}
           <div className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(input)}
-              placeholder="Digite um comando para a IA..."
-              className="flex-1 bg-slate-100 hover:bg-slate-150/50 focus:bg-white border-0 focus:ring-2 focus:ring-indigo-600 rounded-xl px-4 py-2 text-sm text-slate-900 placeholder-slate-400 transition-all outline-none"
+              disabled={isLoading}
+              placeholder="Pergunte algo sobre a clínica..."
+              className="flex-1 bg-slate-100 hover:bg-slate-150/50 focus:bg-white border-0 focus:ring-2 focus:ring-indigo-600 rounded-xl px-4 py-2 text-sm text-slate-900 placeholder-slate-400 transition-all outline-none disabled:opacity-50"
             />
             <button
               onClick={() => handleSendMessage(input)}
-              className="h-9 w-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center justify-center transition-colors shadow-sm shrink-0"
+              disabled={isLoading || !input.trim()}
+              className="h-9 w-9 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white rounded-xl flex items-center justify-center transition-colors shadow-sm shrink-0"
             >
               <Send className="h-4 w-4" />
             </button>
