@@ -6,7 +6,7 @@ import {
   Activity, BrainCircuit, AlertCircle, CheckCircle2, 
   Clock, TrendingDown, Settings2, FileText 
 } from 'lucide-react';
-import { api } from '@/lib/api'; // ✅ Correct import for your API helper
+import { api } from '@/lib/api'; // ✅ Axios/Fetch wrapper for backend requests
 
 // ✅ TypeScript interface for tickets (strong typing instead of `any`)
 interface Ticket {
@@ -32,12 +32,12 @@ export default function PatientWarRoom() {
   useEffect(() => {
     async function loadWarRoomData() {
       try {
-        // 1. Fetch AI clinical summary (added /v1 prefix)
-        const summaryResponse = await api.get(`/v1/patients/${patientId}/summary`);
+        // 1. Added /plans in the summary route
+        const summaryResponse = await api.get(`/v1/plans/patients/${patientId}/summary`);
         setMagicSummary(summaryResponse.data.summary);
 
-        // 2. Fetch SLA tickets (added /v1 prefix)
-        const ticketsResponse = await api.get(`/v1/patients/${patientId}/tickets`);
+        // 2. Added /plans in the tickets route
+        const ticketsResponse = await api.get(`/v1/plans/patients/${patientId}/tickets`);
         setTickets(ticketsResponse.data.tickets);
 
       } catch (error) {
