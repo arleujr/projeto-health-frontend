@@ -1,22 +1,20 @@
 import axios from 'axios';
 
+// Captura a URL da variável de ambiente, ou usa a do Render direto como fallback
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://projeto-health.onrender.com';
+
 export const api = axios.create({
-  // Coloque aqui a URL e a porta onde o seu Back-end Fastify está rodando
-  baseURL: 'http://localhost:3333', 
+  baseURL: API_URL, 
 });
 
-// MOTOR DE SEGURANÇA (INTERCEPTOR): 
-// Ele pega o Token JWT que você salvou no login do profissional e injeta
-// automaticamente no cabeçalho de todas as requisições para o Back-end.
 api.interceptors.request.use(
   (config) => {
-    // Ajuste '@health:token' para o nome da chave que você usou no seu login
+    // Como vi no seu log que você está pegando o token de um cookie, mantenha a lógica que você já usa, ou use o localStorage:
     const token = typeof window !== 'undefined' ? localStorage.getItem('@health:token') : null;
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
     return config;
   },
   (error) => {
