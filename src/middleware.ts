@@ -21,7 +21,8 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Configures the middleware to intercept only core authentication and dashboard paths
+// Configures the middleware to intercept ONLY dashboard navigation paths
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  // Protects dashboard page and any sub-route (e.g., /dashboard/patients)
+  matcher: ['/dashboard/:path*'],
 };

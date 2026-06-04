@@ -1,7 +1,8 @@
-const config = {
+const postcssConfig = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    // This is exactly what the Next.js 16 error is asking for
+    '@tailwindcss/postcss': {},
   },
 };
 
-export default config;
+export default postcssConfig;

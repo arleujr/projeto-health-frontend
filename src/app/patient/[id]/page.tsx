@@ -1,0 +1,199 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { 
+  Activity, BrainCircuit, AlertCircle, CheckCircle2, 
+  Clock, TrendingDown, Settings2, FileText
+} from 'lucide-react';
+import { api } from '@/lib/api'; // Ajuste para o caminho do seu arquivo de API (Axios/Fetch)
+
+// Mock do paciente (depois vamos puxar do back também)
+const mockPatient = {
+  name: "João Silva", 
+  age: 35, 
+  goal: "Hipertrofia", 
+  photo: "JS", 
+  status: "ACTIVE", 
+  lastSeen: "2 horas atrás"
+};
+
+export default function PatientWarRoom({ params }: { params: { id: string } }) {
+  const patientId = params.id;
+
+  // Nossos estados para guardar o que vem do Back-end
+  const [magicSummary, setMagicSummary] = useState<string>("Carregando análise da IA...");
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadWarRoomData() {
+      try {
+        // 1. Puxa o Resumo da IA
+        const summaryResponse = await api.get(`/patients/${patientId}/summary`);
+        setMagicSummary(summaryResponse.data.summary);
+
+        // 2. Puxa a fila de SLA (Tickets)
+        const ticketsResponse = await api.get(`/patients/${patientId}/tickets`);
+        setTickets(ticketsResponse.data.tickets);
+
+      } catch (error) {
+        console.error("Erro ao carregar os dados da Sala de Guerra:", error);
+        setMagicSummary("Não foi possível gerar o resumo no momento.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadWarRoomData();
+  }, [patientId]);
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 p-6 md:p-10 font-sans w-full">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* 1. CABEÇALHO */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2 opacity-70"></div>
+          
+          <div className="flex items-center gap-5">
+            <div className="h-16 w-16 rounded-full bg-slate-900 flex items-center justify-center font-bold text-xl text-white shadow-md">
+              {mockPatient.photo}
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                {mockPatient.name}
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                  {mockPatient.status}
+                </span>
+              </h1>
+              <p className="text-sm text-slate-500 font-medium">
+                {mockPatient.age} anos • Foco: {mockPatient.goal} • Último acesso: {mockPatient.lastSeen}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <button className="flex-1 md:flex-none h-11 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-colors flex items-center justify-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Personalizar Visão
+            </button>
+            <button className="flex-1 md:flex-none h-11 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2">
+              <FileText className="h-4 w-4" />
+              Gerar Plano Escudo
+            </button>
+          </div>
+        </div>
+
+        {/* 2. GRID DE WIDGETS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* COLUNA ESQUERDA E CENTRAL */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* WIDGET 1: Resumo da IA */}
+            <div className="bg-gradient-to-br from-indigo-950 to-slate-900 rounded-2xl p-6 shadow-md relative overflow-hidden text-white border border-indigo-900">
+              <BrainCircuit className="absolute -bottom-4 -right-4 h-32 w-32 text-indigo-500/10" />
+              <div className="flex items-center gap-2 mb-3 relative z-10">
+                <div className="p-1.5 bg-indigo-500/20 rounded-lg">
+                  <BrainCircuit className="h-5 w-5 text-indigo-400" />
+                </div>
+                <h2 className="text-sm font-bold tracking-wide text-indigo-300 uppercase">Resumo Clínico da IA</h2>
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed relative z-10 min-h-[60px]">
+                {isLoading ? (
+                  <span className="animate-pulse flex items-center gap-2">
+                    <span className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"></span>
+                    Sintetizando histórico do paciente...
+                  </span>
+                ) : (
+                  magicSummary
+                )}
+              </p>
+            </div>
+
+            {/* WIDGET 2: Gráfico */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 h-64 flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-slate-400" />
+                  Evolução de Peso
+                </h2>
+                <div className="flex items-center gap-1 text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                  <TrendingDown className="h-4 w-4" /> -2.4kg
+                </div>
+              </div>
+              <div className="flex-1 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
+                [ Gráfico de Linha Recharts Entrará Aqui ]
+              </div>
+            </div>
+
+          </div>
+
+          {/* COLUNA DIREITA */}
+          <div className="space-y-6">
+            
+            {/* WIDGET 3: Cockpit de Urgências */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full max-h-[400px]">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-rose-500" />
+                  Fila de Ação (SLA)
+                </h2>
+                <span className="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">
+                  {tickets.length} Pendentes
+                </span>
+              </div>
+              
+              <div className="p-3 space-y-2 flex-1 overflow-y-auto">
+                {tickets.length === 0 && !isLoading && (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                    <CheckCircle2 className="h-8 w-8 text-emerald-400 mb-2" />
+                    <p className="text-sm font-medium">Nenhum chamado pendente.</p>
+                    <p className="text-xs">Tudo sob controle! 🟢</p>
+                  </div>
+                )}
+
+                {tickets.map((ticket) => (
+                  <div key={ticket.id} className={`p-3 rounded-xl border transition-colors cursor-pointer flex gap-3 group
+                    ${ticket.isOverdue ? 'border-rose-200 bg-rose-50 hover:bg-rose-100' : 'border-amber-200 bg-amber-50 hover:bg-amber-100'}
+                  `}>
+                    <div className="mt-0.5">
+                      {ticket.isOverdue ? (
+                        <AlertCircle className="h-4 w-4 text-rose-600" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-amber-600" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-bold group-hover:opacity-80 
+                        ${ticket.isOverdue ? 'text-rose-900' : 'text-amber-900'}
+                      `}>
+                        {ticket.title}
+                      </h3>
+                      <p className={`text-xs mt-0.5 
+                        ${ticket.isOverdue ? 'text-rose-700/80' : 'text-amber-700/80'}
+                      `}>
+                        {ticket.description}
+                      </p>
+                      
+                      {ticket.isOverdue ? (
+                        <div className="flex items-center gap-1 mt-2 text-[10px] font-bold text-rose-600 uppercase">
+                          <Clock className="h-3 w-3" /> SLA Estourado ({ticket.delayInHours}h de atraso)
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 mt-2 text-[10px] font-bold text-amber-600 uppercase">
+                          <Clock className="h-3 w-3" /> Prazo: {new Date(ticket.slaExpiresAt).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

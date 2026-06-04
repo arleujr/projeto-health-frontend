@@ -7,30 +7,48 @@ export const api = axios.create({
   },
 });
 
-// Interceptor para injetar o JWT automaticamente antes de cada requisição
+// Helper function to read cookies on client side
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
+// Request interceptor: injects token from cookies
 api.interceptors.request.use(
   (config) => {
-    // Busca o token guardado no momento do login Passwordless
-    const token = typeof window !== 'undefined' ? localStorage.getItem('@ProjectHealth:token') : null;
+    const token = getCookie('@ProjectHealth:token');
+    
+    // 👇 CRITICAL LOGS to debug what is being sent to backend 👇
+    console.log(`🚀 [AXIOS] Trying to access route: ${config.baseURL}${config.url}`);
+    console.log(`🔑 [AXIOS] Token extracted from cookie:`, token ? `${token.substring(0, 15)}...` : 'NO TOKEN FOUND');
 
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Clean accidental double quotes around token (common cookie issue)
+      const cleanToken = token.replace(/^"|"$/g, ''); 
+      config.headers.Authorization = `Bearer ${cleanToken}`;
     }
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptor de resposta para capturar desautenticação automática (401)
+// Response interceptor: handles expired session (401)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // If it's a 401 on dashboard route, let the page catch it and handle with mock
+    if (error.config?.url?.includes('/v1/plans/dashboard')) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('@ProjectHealth:token');
+        // Clear expired cookie and redirect to login
+        document.cookie = "@ProjectHealth:token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
         window.location.href = '/login';
       }
     }

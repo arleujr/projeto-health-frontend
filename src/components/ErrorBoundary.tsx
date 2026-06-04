@@ -28,16 +28,16 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full min-h-[140px] flex flex-col items-center justify-center border border-dashed border-red-200 bg-red-50/30 p-4 rounded-2xl text-center">
+        <div className="w-full h-full min-h-35 flex flex-col items-center justify-center border border-dashed border-red-200 bg-red-50/30 p-4 rounded-2xl text-center">
           <AlertTriangle className="h-6 w-6 text-red-500 mb-2" />
           <p className="text-xs font-semibold text-red-700">Falha no Bloco</p>
-          <p className="text-[10px] text-red-500 max-w-[180px] mt-0.5">
+          <p className="text-[10px] text-red-500 max-w-45 mt-0.5">
             {this.props.fallbackMessage || "Não foi possível carregar este card."}
           </p>
         </div>
       );
     }
 
-    return this.children;
+    return this.props.children;
   }
 }
